@@ -1,13 +1,12 @@
 import express from "express";
-import {
-    sendMessage
-} from "../controllers/whatsapp.controller.js";
-import { whatsappWebhook } from "../webhooks/whatsapp.webhook.js";
+import { createSendMessage } from "../controllers/whatsapp.controller.js";
+import { createWhatsAppWebhook } from "../webhooks/whatsapp.webhook.js";
 
-const router = express.Router();
+export const createWhatsAppRouter = ({ sendTemplate, logger }) => {
+    const router = express.Router();
 
-router.post("/send", sendMessage);
-router.post("/webhook", whatsappWebhook);
+    router.post("/send", createSendMessage({ sendTemplate, logger }));
+    router.post("/webhook", createWhatsAppWebhook({ logger }));
 
-
-export default router;
+    return router;
+};
