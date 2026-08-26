@@ -25,6 +25,94 @@ const validTemplateRequest = {
     }
 };
 
+const validEmailTemplateRequest = {
+    to: "candidate@example.com",
+    templateId: "interview-scheduled",
+    variables: {
+        CANDIDATE_NAME: "Rahul Sharma",
+        POSITION: "Customer Support Executive"
+    }
+};
+
+test("POST /api/email/send-template validates and sends a Resend template", async () => {
+    let receivedRequest;
+    const server = await startServer({
+        sendEmailTemplate: async request => {
+            receivedRequest = request;
+            return { id: "email-123" };
+        }
+    });
+
+    try {
+        const response = await fetch(`${server.baseUrl}/api/email/send-template`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(validEmailTemplateRequest)
+        });
+
+        assert.equal(response.status, 200);
+        assert.deepEqual(await response.json(), {
+            success: true,
+            data: { id: "email-123" }
+        });
+        assert.deepEqual(receivedRequest, validEmailTemplateRequest);
+    } finally {
+        await server.close();
+    }
+});
+
+test("POST /api/email/send-template rejects invalid input without contacting Resend", async () => {
+    let sendCount = 0;
+    const server = await startServer({
+        sendEmailTemplate: async () => {
+            sendCount += 1;
+        }
+    });
+
+    try {
+        const response = await fetch(`${server.baseUrl}/api/email/send-template`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                to: "not-an-email",
+                templateId: "interview-scheduled",
+                variables: {}
+            })
+        });
+
+        assert.equal(response.status, 400);
+        assert.equal((await response.json()).success, false);
+        assert.equal(sendCount, 0);
+    } finally {
+        await server.close();
+    }
+});
+
+test("POST /api/email/send-template reports a Resend provider failure", async () => {
+    const server = await startServer({
+        sendEmailTemplate: async () => {
+            throw new Error("provider unavailable");
+        },
+        logger: { error() {}, info() {} }
+    });
+
+    try {
+        const response = await fetch(`${server.baseUrl}/api/email/send-template`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(validEmailTemplateRequest)
+        });
+
+        assert.equal(response.status, 502);
+        assert.deepEqual(await response.json(), {
+            success: false,
+            error: "Failed to send email template"
+        });
+    } finally {
+        await server.close();
+    }
+});
+
 test("POST /api/whatsapp/send validates and sends a template", async () => {
     let receivedRequest;
     const server = await startServer({
