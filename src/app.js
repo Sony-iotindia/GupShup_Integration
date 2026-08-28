@@ -1,11 +1,11 @@
 import express from "express";
 
-import { createEmailRouter } from "./routes/email.routes.js";
-import { createWhatsAppRouter } from "./routes/whatsapp.routes.js";
-import { createAiSensyWhatsAppRouter } from "./routes/whatsapp.aisensy.routes.js";
-import { sendAiSensyWhatsAppTemplate } from "./services/aisensy.service.js";
-import { sendWhatsAppTemplate } from "./services/gupshup.service.js";
-import { sendResendTemplate } from "./services/resend.service.js";
+import { createEmailRouter } from "./modules/email/routes/email.routes.js";
+import { createWhatsAppRouter } from "./modules/whatsapp/routes/whatsapp.routes.js";
+import { createAiSensyWhatsAppRouter } from "./modules/whatsapp/routes/whatsapp.aisensy.routes.js";
+import { sendAiSensyWhatsAppTemplate } from "./modules/whatsapp/providers/aisensy/aisensy.service.js";
+import { sendWhatsAppTemplate } from "./modules/whatsapp/providers/gupshup/gupshup.service.js";
+import { sendResendTemplate } from "./modules/email/providers/resend/resend.service.js";
 
 export const createApp = ({
     sendTemplate = sendWhatsAppTemplate,

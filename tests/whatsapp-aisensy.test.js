@@ -1,9 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { createApp } from "../app.js";
-import { buildAiSensyCampaignRequest } from "../services/aisensy.service.js";
-import { validateAiSensyTemplateRequest } from "../validators/whatsapp.aisensy.validator.js";
+import { createApp } from "../src/app.js";
+import { buildAiSensyCampaignRequest } from "../src/modules/whatsapp/providers/aisensy/aisensy.service.js";
+import { validateAiSensyTemplateRequest } from "../src/modules/whatsapp/validators/whatsapp.aisensy.validator.js";
 
 const validRequest = {
     campaignName: "employee_onboarding",

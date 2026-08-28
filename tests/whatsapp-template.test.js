@@ -3,10 +3,10 @@ import assert from "node:assert/strict";
 
 import {
     validateWhatsAppTemplateRequest
-} from "../validators/whatsapp.validator.js";
+} from "../src/modules/whatsapp/validators/whatsapp.validator.js";
 import {
     buildTemplateMessageRequest
-} from "../services/gupshup.service.js";
+} from "../src/modules/whatsapp/providers/gupshup/gupshup.service.js";
 
 const validRequest = {
     destination: "919876543210",

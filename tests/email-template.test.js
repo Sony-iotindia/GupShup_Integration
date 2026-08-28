@@ -3,10 +3,10 @@ import assert from "node:assert/strict";
 
 import {
     validateEmailTemplateRequest
-} from "../validators/email.validator.js";
+} from "../src/modules/email/validators/email.validator.js";
 import {
     buildResendTemplateRequest
-} from "../services/resend.service.js";
+} from "../src/modules/email/providers/resend/resend.service.js";
 
 const validRequest = {
     to: "candidate@example.com",
