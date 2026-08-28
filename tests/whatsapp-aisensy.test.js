@@ -84,7 +84,7 @@ test("refuses to build an AiSensy request without an API key", () => {
     );
 });
 
-test("POST /api/whatsapp/aisensy/send validates and sends an AiSensy campaign", async () => {
+test("POST /api/v1/whatsapp/aisensy/messages/template validates and sends an AiSensy campaign", async () => {
     let receivedRequest;
     const server = await startServer({
         sendAiSensyTemplate: async request => {
@@ -94,7 +94,7 @@ test("POST /api/whatsapp/aisensy/send validates and sends an AiSensy campaign", 
     });
 
     try {
-        const response = await fetch(`${server.baseUrl}/api/whatsapp/aisensy/send`, {
+        const response = await fetch(`${server.baseUrl}/api/v1/whatsapp/aisensy/messages/template`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(validRequest)
@@ -111,7 +111,7 @@ test("POST /api/whatsapp/aisensy/send validates and sends an AiSensy campaign", 
     }
 });
 
-test("POST /api/whatsapp/aisensy/send rejects invalid input without contacting AiSensy", async () => {
+test("POST /api/v1/whatsapp/aisensy/messages/template rejects invalid input without contacting AiSensy", async () => {
     let sendCount = 0;
     const server = await startServer({
         sendAiSensyTemplate: async () => {
@@ -120,7 +120,7 @@ test("POST /api/whatsapp/aisensy/send rejects invalid input without contacting A
     });
 
     try {
-        const response = await fetch(`${server.baseUrl}/api/whatsapp/aisensy/send`, {
+        const response = await fetch(`${server.baseUrl}/api/v1/whatsapp/aisensy/messages/template`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ destination: "+919876543210" })
@@ -134,7 +134,7 @@ test("POST /api/whatsapp/aisensy/send rejects invalid input without contacting A
     }
 });
 
-test("POST /api/whatsapp/aisensy/send reports an AiSensy provider failure", async () => {
+test("POST /api/v1/whatsapp/aisensy/messages/template reports an AiSensy provider failure", async () => {
     const server = await startServer({
         sendAiSensyTemplate: async () => {
             throw new Error("provider unavailable");
@@ -143,7 +143,7 @@ test("POST /api/whatsapp/aisensy/send reports an AiSensy provider failure", asyn
     });
 
     try {
-        const response = await fetch(`${server.baseUrl}/api/whatsapp/aisensy/send`, {
+        const response = await fetch(`${server.baseUrl}/api/v1/whatsapp/aisensy/messages/template`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(validRequest)

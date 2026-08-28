@@ -17,7 +17,8 @@
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "joi": "^18.2.5",
-    "resend": "^6.22.1"
+    "resend": "^6.22.1",
+    "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.14"

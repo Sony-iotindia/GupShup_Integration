@@ -4,7 +4,7 @@ import { createSendAiSensyMessage } from "../controllers/whatsapp.aisensy.contro
 export const createAiSensyWhatsAppRouter = ({ sendAiSensyTemplate, logger }) => {
     const router = express.Router();
 
-    router.post("/send", createSendAiSensyMessage({
+    router.post("/messages/template", createSendAiSensyMessage({
         sendAiSensyTemplate,
         logger
     }));

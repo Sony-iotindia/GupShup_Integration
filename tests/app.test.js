@@ -113,7 +113,7 @@ test("POST /api/email/send-template reports a Resend provider failure", async ()
     }
 });
 
-test("POST /api/whatsapp/send validates and sends a template", async () => {
+test("POST /api/v1/whatsapp/gupshup/messages/template validates and sends a template", async () => {
     let receivedRequest;
     const server = await startServer({
         sendTemplate: async request => {
@@ -123,7 +123,7 @@ test("POST /api/whatsapp/send validates and sends a template", async () => {
     });
 
     try {
-        const response = await fetch(`${server.baseUrl}/api/whatsapp/send`, {
+        const response = await fetch(`${server.baseUrl}/api/v1/whatsapp/gupshup/messages/template`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(validTemplateRequest)
@@ -140,7 +140,7 @@ test("POST /api/whatsapp/send validates and sends a template", async () => {
     }
 });
 
-test("POST /api/whatsapp/send rejects invalid input without contacting Gupshup", async () => {
+test("POST /api/v1/whatsapp/gupshup/messages/template rejects invalid input without contacting Gupshup", async () => {
     let sendCount = 0;
     const server = await startServer({
         sendTemplate: async () => {
@@ -149,7 +149,7 @@ test("POST /api/whatsapp/send rejects invalid input without contacting Gupshup",
     });
 
     try {
-        const response = await fetch(`${server.baseUrl}/api/whatsapp/send`, {
+        const response = await fetch(`${server.baseUrl}/api/v1/whatsapp/gupshup/messages/template`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ destination: "919876543210" })
@@ -163,7 +163,7 @@ test("POST /api/whatsapp/send rejects invalid input without contacting Gupshup",
     }
 });
 
-test("POST /api/whatsapp/send reports an upstream provider failure", async () => {
+test("POST /api/v1/whatsapp/gupshup/messages/template reports an upstream provider failure", async () => {
     const server = await startServer({
         sendTemplate: async () => {
             throw new Error("provider unavailable");
@@ -172,7 +172,7 @@ test("POST /api/whatsapp/send reports an upstream provider failure", async () =>
     });
 
     try {
-        const response = await fetch(`${server.baseUrl}/api/whatsapp/send`, {
+        const response = await fetch(`${server.baseUrl}/api/v1/whatsapp/gupshup/messages/template`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(validTemplateRequest)
