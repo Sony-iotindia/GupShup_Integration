@@ -345,6 +345,32 @@ The endpoint accepts AiSensy webhook JSON events and acknowledges them with HTTP
 OK
 ```
 
+## Resend email webhook
+
+```http
+POST /api/v1/email/resend/webhook
+```
+
+For local development with ngrok, configure the Resend webhook URL as:
+
+```text
+https://YOUR-NGROK-DOMAIN.ngrok-free.dev/api/v1/email/resend/webhook
+```
+
+The endpoint verifies Resend webhook signatures and accepts subscribed email events such as sent, delivered, opened, clicked, bounced, failed, and received.
+
+Verified event — HTTP `200`:
+
+```text
+OK
+```
+
+Invalid signature — HTTP `400`:
+
+```text
+Invalid webhook
+```
+
 ## Health check
 
 ```http

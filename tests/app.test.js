@@ -113,6 +113,84 @@ test("POST /api/email/send-template reports a Resend provider failure", async ()
     }
 });
 
+test("POST /api/v1/email/resend/webhook verifies and acknowledges a Resend event", async () => {
+    const rawPayload = '{"type":"email.delivered","data":{"email_id":"email-123"}}';
+    const verifiedEvent = {
+        type: "email.delivered",
+        data: { email_id: "email-123" }
+    };
+    const logEntries = [];
+    const server = await startServer({
+        verifyEmailWebhook: ({ payload, headers, webhookSecret }) => {
+            assert.equal(payload, rawPayload);
+            assert.deepEqual(headers, {
+                id: "msg_test_123",
+                timestamp: "1788340800",
+                signature: "v1,test-signature"
+            });
+            assert.equal(webhookSecret, "whsec_test");
+            return verifiedEvent;
+        },
+        resendWebhookSecret: "whsec_test",
+        logger: {
+            info: (...args) => logEntries.push(args),
+            error() {}
+        }
+    });
+
+    try {
+        const response = await fetch(`${server.baseUrl}/api/v1/email/resend/webhook`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "svix-id": "msg_test_123",
+                "svix-timestamp": "1788340800",
+                "svix-signature": "v1,test-signature"
+            },
+            body: rawPayload
+        });
+
+        assert.equal(response.status, 200);
+        assert.equal(await response.text(), "OK");
+        assert.deepEqual(logEntries, [["Resend email webhook received", verifiedEvent]]);
+    } finally {
+        await server.close();
+    }
+});
+
+test("POST /api/v1/email/resend/webhook rejects an invalid Resend signature", async () => {
+    const logEntries = [];
+    const server = await startServer({
+        verifyEmailWebhook: () => {
+            throw new Error("Invalid signature");
+        },
+        resendWebhookSecret: "whsec_test",
+        logger: {
+            info: (...args) => logEntries.push(args),
+            error() {}
+        }
+    });
+
+    try {
+        const response = await fetch(`${server.baseUrl}/api/v1/email/resend/webhook`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "svix-id": "msg_invalid",
+                "svix-timestamp": "1788340800",
+                "svix-signature": "v1,invalid"
+            },
+            body: '{"type":"email.delivered"}'
+        });
+
+        assert.equal(response.status, 400);
+        assert.equal(await response.text(), "Invalid webhook");
+        assert.deepEqual(logEntries, []);
+    } finally {
+        await server.close();
+    }
+});
+
 test("POST /api/v1/whatsapp/gupshup/messages/template validates and sends a template", async () => {
     let receivedRequest;
     const server = await startServer({

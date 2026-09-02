@@ -14,15 +14,30 @@ import { sendWhatsAppTemplate } from "./modules/whatsapp/providers/gupshup/gupsh
 import { sendResendTemplate } from "./modules/email/providers/resend/resend.service.js";
 import { createWhatsAppWebhook } from "./modules/whatsapp/webhooks/whatsapp.webhook.js";
 import { createAiSensyWhatsAppWebhook } from "./modules/whatsapp/webhooks/whatsapp.aisensy.webhook.js";
+import {
+    createResendEmailWebhook,
+    verifyResendWebhookRequest
+} from "./modules/email/webhooks/email.resend.webhook.js";
 
 export const createApp = ({
     sendTemplate = sendWhatsAppTemplate,
     sendAiSensyTemplate = sendAiSensyWhatsAppTemplate,
     sendEmailTemplate = sendResendTemplate,
+    verifyEmailWebhook = verifyResendWebhookRequest,
+    resendWebhookSecret = process.env.RESEND_WEBHOOK_SECRET,
     logger = console
 } = {}) => {
     const app = express();
 
+    app.post(
+        "/api/v1/email/resend/webhook",
+        express.text({ type: "application/json" }),
+        createResendEmailWebhook({
+            verifyWebhook: verifyEmailWebhook,
+            webhookSecret: resendWebhookSecret,
+            logger
+        })
+    );
     app.use(express.json());
     app.get("/api-docs/modules/whatsapp.json", (req, res) => {
         res.json(whatsappSwaggerSpecification);

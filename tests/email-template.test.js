@@ -7,6 +7,9 @@ import {
 import {
     buildResendTemplateRequest
 } from "../src/modules/email/providers/resend/resend.service.js";
+import {
+    verifyResendWebhookRequest
+} from "../src/modules/email/webhooks/email.resend.webhook.js";
 
 const validRequest = {
     to: "candidate@example.com",
@@ -56,4 +59,19 @@ test("builds the Resend template payload", () => {
             variables: validRequest.variables
         }
     });
+});
+
+test("refuses to verify a Resend webhook without a signing secret", () => {
+    assert.throws(
+        () => verifyResendWebhookRequest({
+            payload: '{"type":"email.delivered"}',
+            headers: {
+                id: "msg_test_123",
+                timestamp: "1788340800",
+                signature: "v1,test-signature"
+            },
+            webhookSecret: ""
+        }),
+        /RESEND_WEBHOOK_SECRET is required/
+    );
 });
