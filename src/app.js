@@ -13,6 +13,7 @@ import { sendAiSensyWhatsAppTemplate } from "./modules/whatsapp/providers/aisens
 import { sendWhatsAppTemplate } from "./modules/whatsapp/providers/gupshup/gupshup.service.js";
 import { sendResendTemplate } from "./modules/email/providers/resend/resend.service.js";
 import { createWhatsAppWebhook } from "./modules/whatsapp/webhooks/whatsapp.webhook.js";
+import { createAiSensyWhatsAppWebhook } from "./modules/whatsapp/webhooks/whatsapp.aisensy.webhook.js";
 
 export const createApp = ({
     sendTemplate = sendWhatsAppTemplate,
@@ -43,6 +44,10 @@ export const createApp = ({
         createAiSensyWhatsAppRouter({ sendAiSensyTemplate, logger })
     );
     app.post("/api/whatsapp/webhook", createWhatsAppWebhook({ logger }));
+    app.post(
+        "/api/v1/whatsapp/aisensy/webhook",
+        createAiSensyWhatsAppWebhook({ logger })
+    );
     app.use("/api/email", createEmailRouter({ sendEmailTemplate, logger }));
 
     app.get("/", (req, res) => {

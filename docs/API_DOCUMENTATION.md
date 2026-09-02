@@ -327,6 +327,24 @@ Successful acknowledgement — HTTP `200`:
 OK
 ```
 
+## AiSensy WhatsApp webhook
+
+```http
+POST /api/v1/whatsapp/aisensy/webhook
+```
+
+For local development with ngrok, configure the AiSensy webhook URL as:
+
+```text
+https://YOUR-NGROK-DOMAIN.ngrok-free.app/api/v1/whatsapp/aisensy/webhook
+```
+
+The endpoint accepts AiSensy webhook JSON events and acknowledges them with HTTP `200`:
+
+```text
+OK
+```
+
 ## Health check
 
 ```http

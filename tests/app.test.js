@@ -243,3 +243,34 @@ test("POST /api/whatsapp/webhook acknowledges non-message events", async () => {
         await server.close();
     }
 });
+
+test("POST /api/v1/whatsapp/aisensy/webhook logs and acknowledges an AiSensy event", async () => {
+    const logEntries = [];
+    const server = await startServer({
+        logger: {
+            info: (...args) => logEntries.push(args),
+            error() {}
+        }
+    });
+    const webhook = {
+        event: "message.delivered",
+        data: {
+            messageId: "aisensy-message-123",
+            destination: "+919876543210"
+        }
+    };
+
+    try {
+        const response = await fetch(`${server.baseUrl}/api/v1/whatsapp/aisensy/webhook`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(webhook)
+        });
+
+        assert.equal(response.status, 200);
+        assert.equal(await response.text(), "OK");
+        assert.deepEqual(logEntries, [["AiSensy WhatsApp webhook received", webhook]]);
+    } finally {
+        await server.close();
+    }
+});
