@@ -4,6 +4,8 @@ import assert from "node:assert/strict";
 import { createApp } from "../src/app.js";
 import { buildAiSensyCampaignRequest } from "../src/modules/whatsapp/providers/aisensy/aisensy.service.js";
 import { validateAiSensyTemplateRequest } from "../src/modules/whatsapp/validators/whatsapp.aisensy.validator.js";
+import { validateAiSensyBulkTemplateRequest } from "../src/modules/whatsapp/validators/whatsapp.aisensy.validator.js";
+import { createAiSensyBulkCampaignService } from "../src/modules/whatsapp/services/aisensy-bulk-campaign.service.js";
 
 const validRequest = {
     campaignName: "employee_onboarding",
@@ -154,6 +156,121 @@ test("POST /api/v1/whatsapp/aisensy/messages/template reports an AiSensy provide
             success: false,
             error: "Failed to send WhatsApp template through AiSensy"
         });
+    } finally {
+        await server.close();
+    }
+});
+
+const validBulkRequest = {
+    campaignName: "janmashtami_2026",
+    source: "IOT India Backend",
+    tags: ["janmashtami_2026"],
+    recipients: [
+        {
+            destination: "+919876543210",
+            userName: "Rahul",
+            templateParams: ["Rahul", "Management Team", "IoT India"]
+        },
+        {
+            destination: "+919812345678",
+            userName: "Priya",
+            templateParams: ["Priya", "Management Team", "IoT India"]
+        }
+    ]
+};
+
+test("accepts a valid AiSensy bulk template request", () => {
+    const { error, value } = validateAiSensyBulkTemplateRequest(validBulkRequest);
+
+    assert.equal(error, undefined);
+    assert.deepEqual(value, validBulkRequest);
+});
+
+test("rejects duplicate destinations in an AiSensy bulk request", () => {
+    const { error } = validateAiSensyBulkTemplateRequest({
+        ...validBulkRequest,
+        recipients: [
+            validBulkRequest.recipients[0],
+            { ...validBulkRequest.recipients[0], userName: "Duplicate Rahul" }
+        ]
+    });
+
+    assert.match(error.message, /recipients.*unique/i);
+});
+
+test("bulk endpoint queues recipients and exposes campaign status", async () => {
+    const calls = [];
+    const bulkCampaignService = createAiSensyBulkCampaignService({
+        sendTemplate: async request => {
+            calls.push(request);
+            return { success: true };
+        },
+        getRequestsPerSecond: () => 1000
+    });
+    const server = await startServer({ bulkCampaignService });
+
+    try {
+        const response = await fetch(`${server.baseUrl}/api/v1/whatsapp/aisensy/messages/template/bulk`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(validBulkRequest)
+        });
+        const body = await response.json();
+
+        assert.equal(response.status, 202);
+        assert.equal(body.success, true);
+        assert.equal(body.status, "queued");
+        assert.equal(body.totalRecipients, 2);
+        assert.ok(body.campaignId);
+
+        await new Promise(resolve => setTimeout(resolve, 30));
+
+        const statusResponse = await fetch(
+            `${server.baseUrl}/api/v1/whatsapp/aisensy/campaigns/${body.campaignId}`
+        );
+        const status = await statusResponse.json();
+
+        assert.equal(statusResponse.status, 200);
+        assert.equal(status.total, 2);
+        assert.equal(status.accepted, 2);
+        assert.equal(status.failed, 0);
+        assert.equal(status.status, "completed");
+        assert.equal(calls.length, 2);
+        assert.deepEqual(calls[0], {
+            campaignName: validBulkRequest.campaignName,
+            source: validBulkRequest.source,
+            tags: validBulkRequest.tags,
+            ...validBulkRequest.recipients[0]
+        });
+    } finally {
+        bulkCampaignService.stop();
+        await server.close();
+    }
+});
+
+test("bulk endpoint rejects invalid recipients without queueing", async () => {
+    let enqueueCount = 0;
+    const server = await startServer({
+        bulkCampaignService: {
+            enqueue() {
+                enqueueCount += 1;
+            },
+            getCampaign() {}
+        }
+    });
+
+    try {
+        const response = await fetch(`${server.baseUrl}/api/v1/whatsapp/aisensy/messages/template/bulk`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                ...validBulkRequest,
+                recipients: [{ destination: "9876543210", userName: "Rahul" }]
+            })
+        });
+
+        assert.equal(response.status, 400);
+        assert.equal(enqueueCount, 0);
     } finally {
         await server.close();
     }

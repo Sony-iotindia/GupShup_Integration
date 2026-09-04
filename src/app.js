@@ -14,6 +14,7 @@ import { sendWhatsAppTemplate } from "./modules/whatsapp/providers/gupshup/gupsh
 import { sendResendTemplate } from "./modules/email/providers/resend/resend.service.js";
 import { createWhatsAppWebhook } from "./modules/whatsapp/webhooks/whatsapp.webhook.js";
 import { createAiSensyWhatsAppWebhook } from "./modules/whatsapp/webhooks/whatsapp.aisensy.webhook.js";
+import { createAiSensyBulkCampaignService } from "./modules/whatsapp/services/aisensy-bulk-campaign.service.js";
 import {
     createResendEmailWebhook,
     verifyResendWebhookRequest
@@ -22,12 +23,15 @@ import {
 export const createApp = ({
     sendTemplate = sendWhatsAppTemplate,
     sendAiSensyTemplate = sendAiSensyWhatsAppTemplate,
+    bulkCampaignService,
     sendEmailTemplate = sendResendTemplate,
     verifyEmailWebhook = verifyResendWebhookRequest,
     resendWebhookSecret = process.env.RESEND_WEBHOOK_SECRET,
     logger = console
 } = {}) => {
     const app = express();
+    const aiSensyBulkCampaignService = bulkCampaignService
+        ?? createAiSensyBulkCampaignService({ sendTemplate: sendAiSensyTemplate });
 
     app.post(
         "/api/v1/email/resend/webhook",
@@ -56,7 +60,11 @@ export const createApp = ({
     );
     app.use(
         "/api/v1/whatsapp/aisensy",
-        createAiSensyWhatsAppRouter({ sendAiSensyTemplate, logger })
+        createAiSensyWhatsAppRouter({
+            sendAiSensyTemplate,
+            bulkCampaignService: aiSensyBulkCampaignService,
+            logger
+        })
     );
     app.post("/api/whatsapp/webhook", createWhatsAppWebhook({ logger }));
     app.post(

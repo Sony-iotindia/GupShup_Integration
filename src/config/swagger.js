@@ -209,6 +209,52 @@ const whatsappSchemas = {
                 additionalProperties: { type: "string" }
             }
         }
+    },
+    AiSensyBulkTemplateRequest: {
+        type: "object",
+        additionalProperties: false,
+        required: ["campaignName", "recipients"],
+        properties: {
+            campaignName: { type: "string" },
+            source: { type: "string" },
+            media: {
+                type: "object",
+                additionalProperties: false,
+                required: ["url", "filename"],
+                properties: {
+                    url: { type: "string", format: "uri", pattern: "^https://" },
+                    filename: { type: "string" }
+                }
+            },
+            tags: { type: "array", items: { type: "string" } },
+            attributes: {
+                type: "object",
+                additionalProperties: { type: "string" }
+            },
+            recipients: {
+                type: "array",
+                minItems: 1,
+                maxItems: 1000,
+                items: {
+                    type: "object",
+                    additionalProperties: false,
+                    required: ["destination", "userName"],
+                    properties: {
+                        destination: {
+                            type: "string",
+                            pattern: "^\\+[0-9]{8,15}$"
+                        },
+                        userName: { type: "string" },
+                        templateParams: {
+                            type: "array",
+                            items: {
+                                oneOf: [{ type: "string" }, { type: "number" }]
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 };
 
@@ -265,6 +311,38 @@ const aiSensyOperation = {
     }
 };
 
+const aiSensyBulkOperation = {
+    tags: ["AiSensy"],
+    summary: "Queue a bulk template campaign",
+    requestBody: {
+        required: true,
+        content: {
+            "application/json": {
+                schema: {
+                    $ref: "#/components/schemas/AiSensyBulkTemplateRequest"
+                },
+                example: {
+                    campaignName: "janmashtami_2026",
+                    source: "IOT India Backend",
+                    tags: ["janmashtami_2026"],
+                    recipients: [
+                        {
+                            destination: "+919876543210",
+                            userName: "Rahul",
+                            templateParams: ["Rahul", "Management Team", "IoT India"]
+                        }
+                    ]
+                }
+            }
+        }
+    },
+    responses: {
+        202: { description: "Bulk campaign queued" },
+        400: { $ref: "#/components/responses/ValidationError" },
+        500: { description: "Campaign could not be queued" }
+    }
+};
+
 export const whatsappSwaggerSpecification = {
     openapi: "3.0.3",
     info: { title: "WhatsApp", version: "1.0.0" },
@@ -276,6 +354,25 @@ export const whatsappSwaggerSpecification = {
         },
         "/api/v1/whatsapp/aisensy/messages/template": {
             post: aiSensyOperation
+        },
+        "/api/v1/whatsapp/aisensy/messages/template/bulk": {
+            post: aiSensyBulkOperation
+        },
+        "/api/v1/whatsapp/aisensy/campaigns/{campaignId}": {
+            get: {
+                tags: ["AiSensy"],
+                summary: "Get bulk campaign progress",
+                parameters: [{
+                    name: "campaignId",
+                    in: "path",
+                    required: true,
+                    schema: { type: "string", format: "uuid" }
+                }],
+                responses: {
+                    200: { description: "Campaign progress" },
+                    404: { description: "Campaign not found" }
+                }
+            }
         }
     },
     components: {

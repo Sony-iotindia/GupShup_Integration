@@ -107,7 +107,9 @@ test("WhatsApp Swagger module contains provider groups and Local/Live servers", 
         ]);
         assert.deepEqual(Object.keys(specification.paths), [
             "/api/v1/whatsapp/gupshup/messages/template",
-            "/api/v1/whatsapp/aisensy/messages/template"
+            "/api/v1/whatsapp/aisensy/messages/template",
+            "/api/v1/whatsapp/aisensy/messages/template/bulk",
+            "/api/v1/whatsapp/aisensy/campaigns/{campaignId}"
         ]);
     } finally {
         await server.close();

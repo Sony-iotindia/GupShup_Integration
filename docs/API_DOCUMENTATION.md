@@ -20,6 +20,8 @@ Endpoints are grouped as **module → provider → resource**.
 | --- | --- | --- | --- |
 | WhatsApp | Gupshup | `POST` | `/api/v1/whatsapp/gupshup/messages/template` |
 | WhatsApp | AiSensy | `POST` | `/api/v1/whatsapp/aisensy/messages/template` |
+| WhatsApp | AiSensy | `POST` | `/api/v1/whatsapp/aisensy/messages/template/bulk` |
+| WhatsApp | AiSensy | `GET` | `/api/v1/whatsapp/aisensy/campaigns/:campaignId` |
 | Email | Resend | `POST` | `/api/email/send-template` |
 
 ---
@@ -240,6 +242,78 @@ AiSensy or network failure — HTTP `502`:
 `data` contains the response returned by AiSensy.
 
 > Gupshup numbers do not include `+`. AiSensy numbers must include `+`.
+
+---
+
+## AiSensy: queue a bulk template campaign
+
+```http
+POST /api/v1/whatsapp/aisensy/messages/template/bulk
+```
+
+Queues between 1 and 1,000 unique recipients. Shared campaign fields are
+combined with each recipient and sent through the existing AiSensy template
+service. Set `AISENSY_MAX_RPS` to the safe request rate for the current plan;
+the default is `30` and the accepted range is 1–1,000.
+
+```json
+{
+  "campaignName": "janmashtami_2026",
+  "source": "IOT India Backend",
+  "tags": ["janmashtami_2026"],
+  "recipients": [
+    {
+      "destination": "+919876543210",
+      "userName": "Rahul",
+      "templateParams": ["Rahul", "Management Team", "IoT India"]
+    },
+    {
+      "destination": "+919812345678",
+      "userName": "Priya",
+      "templateParams": ["Priya", "Management Team", "IoT India"]
+    }
+  ]
+}
+```
+
+Queued — HTTP `202`:
+
+```json
+{
+  "success": true,
+  "campaignId": "2d31a129-a7b4-478f-b10b-9284bfcb872c",
+  "status": "queued",
+  "totalRecipients": 2
+}
+```
+
+Duplicate destinations and invalid recipients reject the complete request with
+HTTP `400` before anything is queued.
+
+### Bulk campaign progress
+
+```http
+GET /api/v1/whatsapp/aisensy/campaigns/:campaignId
+```
+
+```json
+{
+  "campaignId": "2d31a129-a7b4-478f-b10b-9284bfcb872c",
+  "status": "processing",
+  "total": 1000,
+  "queued": 650,
+  "processing": 30,
+  "accepted": 315,
+  "failed": 5,
+  "createdAt": "2026-09-03T12:00:00.000Z",
+  "completedAt": null
+}
+```
+
+The included queue and campaign status store are in memory. Pending work and
+status are lost when the Node.js process restarts. Replace this service with a
+durable queue and persistent campaign store before using it for production
+campaigns.
 
 ---
 
